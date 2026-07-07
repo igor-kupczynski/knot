@@ -64,4 +64,3 @@ func printFile(path string) {
 		fmt.Fprintln(os.Stdout)
 	}
 }
-

@@ -26,7 +26,9 @@ knot defines its own KB layout (`knot init` scaffolds it).
 - No page-edit primitive from outside. Ever (v1).
 - Concurrency-safe by construction: one file per capture, no merges, plays fine with file sync (e.g. iCloud) + git + N parallel sessions.
 
-**File** — the resident agent folds the inbox into pages: synthesis, superseded-decision strikethroughs, index and audit-log updates. In v1 this is an interactive session in the KB folder, e.g. Cursor, Claude Code, which already has connectors such as slack/jira for chasing sources.
+**File** — the resident agent folds the inbox into pages: synthesis, superseded-decision strikethroughs, index and audit-log updates. In v1 this is an interactive session in the KB folder, e.g. Cursor, Claude Code, which already has connectors such as slack/jira for chasing sources. Procedures live in `.agents/skills/` (`/ingest` for filing); invariants (page model, index/log format, editorial judgment) stay in `AGENTS.md`.
+
+**Sync** — git as the multi-machine substrate. `knot sync` commits local changes (`sync: <hostname> <RFC3339>`), then `git pull --rebase` and `git push` when a remote is configured; idempotent and safe to run repeatedly. Captures can't conflict by construction (unique filenames). `log.md` uses a union merge driver (`.gitattributes`). Page conflicts are expected to be rare — one machine hosts the resident agent; git detects the exception instead of silently losing it. Capture never touches the network; sync is a separate verb. On rebase conflict, knot runs `git rebase --abort` (local commit stands), reports conflicting paths, and exits non-zero pointing at `/git-conflict-resolve` — knot never merges content itself. No remote: sync commits locally and reports local-only mode. `knot init <path> --from <git-url>` clones an existing KB (remote already set) — machine 1 scaffolds and pushes, every other machine runs one command.
 
 **Integrate**
 - Two-layer self-onboarding: `knot prompt --snippet` emits the short paragraph for global CLAUDE.md / Cursor rules / AGENTS.md equivalents; the snippet just points agents at `knot prompt`, which emits the full agent-facing usage. The real instructions live in the binary, so the pasted config never drifts.
@@ -36,14 +38,15 @@ knot defines its own KB layout (`knot init` scaffolds it).
 
 ```
 kb/
-  AGENTS.md       # resident agent's contract: filing workflow, page model, conventions (scaffolded once; the resident agent owns it after)
+  AGENTS.md       # resident agent invariants: layout, page model, index/log format, editorial judgment
+  .agents/skills/ # procedures: /ingest (filing), /git-conflict-resolve (sync conflicts)
   index.md        # browse layer, one line per page
   pages/*.md      # entity/topic pages; dated decision sections, minimal frontmatter (updated:, sources:)
   inbox/*.md      # unfiled captures, timestamped, one per capture
-  log.md          # append-only audit trail of filings
+  log.md          # append-only audit trail of filings (union merge via .gitattributes)
 ```
 
-Page model (sketch — the authoritative version lives in the scaffolded `AGENTS.md`): entity-centric pages, decisions as dated sections newest-on-top, superseded ones struck through, relative markdown links, cuts beat additions.
+`knot init` scaffolds this layout, initializes a git repo with an initial commit, and includes the resident-agent skills. `AGENTS.md` holds invariants; `.agents/skills/` holds workflows — each fact lives in exactly one place.
 
 ## v1.1
 

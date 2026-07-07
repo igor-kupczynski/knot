@@ -41,5 +41,6 @@ func init() {
 	rootCmd.AddCommand(readCmd)
 	rootCmd.AddCommand(globCmd)
 	rootCmd.AddCommand(captureCmd)
+	rootCmd.AddCommand(syncCmd)
 	rootCmd.AddCommand(promptCmd)
 }
