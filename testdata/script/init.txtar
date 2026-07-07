@@ -1,0 +1,30 @@
+env HOME=$WORK
+
+exec knot init $WORK/kb
+exists $WORK/kb/AGENTS.md
+exists $WORK/kb/index.md
+exists $WORK/kb/log.md
+exists $WORK/kb/pages
+exists $WORK/kb/inbox
+grep 'Agent instructions' $WORK/kb/AGENTS.md
+grep '# Index' $WORK/kb/index.md
+grep '# Log' $WORK/kb/log.md
+
+exists $WORK/.config/knot/config
+grep $WORK/kb $WORK/.config/knot/config
+
+# idempotent: never overwrite existing files
+cp custom-index.md $WORK/kb/index.md
+exec knot init $WORK/kb
+grep 'CUSTOM INDEX' $WORK/kb/index.md
+
+# config file also not overwritten
+cp other-config $WORK/.config/knot/config
+exec knot init $WORK/kb
+grep '/other/path' $WORK/.config/knot/config
+
+-- custom-index.md --
+CUSTOM INDEX
+
+-- other-config --
+/other/path

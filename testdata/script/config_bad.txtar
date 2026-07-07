@@ -1,0 +1,18 @@
+env HOME=$WORK
+
+exec knot init $WORK/kb
+
+# KNOT_KB pointing at a file
+env KNOT_KB=$WORK/kb/index.md
+! exec knot read anything
+stderr 'is not a directory'
+
+# config pointing at missing directory
+env KNOT_KB=
+mkdir -p $WORK/.config/knot
+cp missing-config $WORK/.config/knot/config
+! exec knot read anything
+stderr 'does not exist'
+
+-- missing-config --
+$WORK/missing-kb-dir

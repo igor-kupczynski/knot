@@ -1,0 +1,35 @@
+# knot — personal knowledge base access
+
+knot connects you to a personal markdown knowledge base (KB) maintained by its
+own resident agent. Use it to (1) pull the context behind past decisions and
+(2) push new knowledge back as you work. You cannot edit KB pages — you capture
+raw notes; the resident agent files them.
+
+## Reading
+
+    knot grep <pattern>        Search the whole KB. It's ripgrep underneath:
+                               regex, smart-case, -l, -C N, --json all work.
+                               Output is path:line:text, paths relative to the KB.
+    knot read <name-or-path>   Print a page by name (case-insensitive) or any
+                               KB file by the relative path grep gave you.
+    knot glob <pattern>        List KB files matching a pattern
+                               (knot glob postgres, knot glob 'pages/*.md').
+
+Search before assuming: if a project, system, or decision might have history
+here, `knot grep` it first.
+
+## Capturing
+
+    knot capture [--page X] [--source URL]... "text"     (or pipe text on stdin)
+
+Capture when you learn something durable: a decision and its why, a gotcha, a
+constraint that took effort to discover, context the next session would need.
+Write a self-contained summary — the resident agent files it later without
+your session context.
+
+- --page hints which page it belongs to (may name a page that doesn't exist yet)
+- --source repeats: link the PR, the ticket, the thread
+- Captures are instant and append-only; they never touch pages.
+
+When in doubt, capture — filing quality is the resident agent's problem, not yours.
+

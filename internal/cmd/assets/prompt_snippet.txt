@@ -1,0 +1,5 @@
+You have access to `knot`, a CLI for a personal markdown knowledge base holding
+context on past decisions, systems, and projects. Search it before assuming:
+`knot grep <pattern>`. Capture durable learnings back as you work:
+`knot capture --source <url> "self-contained summary"`. Run `knot prompt` for
+full usage.

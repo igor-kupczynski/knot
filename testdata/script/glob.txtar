@@ -1,0 +1,18 @@
+[!exec:rg] skip 'rg not installed'
+
+env HOME=$WORK
+env KNOT_KB=$WORK/kb
+
+exec knot init $WORK/kb
+exec knot capture 'postgres pool settings for glob test'
+
+exec knot glob postgres
+stdout inbox/
+
+! exec knot glob 'pages/*.md'
+
+exec knot glob
+stdout AGENTS.md
+stdout index.md
+stdout log.md
+stdout inbox/

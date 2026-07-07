@@ -1,0 +1,32 @@
+env HOME=$WORK
+env KNOT_KB=$WORK/kb
+
+exec knot init $WORK/kb
+
+# concurrent same-slug captures must not clobber each other
+exec chmod +x parallel-capture
+exec ./parallel-capture $WORK/kb
+stdout 'two distinct captures verified'
+
+-- parallel-capture --
+#!/bin/sh
+set -e
+kb=$1
+cd "$kb"
+(
+  knot capture --page same 'concurrent body alpha' &
+  knot capture --page same 'concurrent body beta' &
+  wait
+)
+count=$(ls inbox/*same*.md 2>/dev/null | wc -l | tr -d ' ')
+if test "$count" -lt 2; then
+  echo "expected 2 capture files, got $count" >&2
+  exit 1
+fi
+for body in 'concurrent body alpha' 'concurrent body beta'; do
+  if ! knot grep -F "$body" inbox/ >/dev/null; then
+    echo "missing body: $body" >&2
+    exit 1
+  fi
+done
+echo 'two distinct captures verified'

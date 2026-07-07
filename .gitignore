@@ -1,0 +1,9 @@
+# Build artifacts
+/knot
+*.exe
+*.test
+coverage.out
+coverage.html
+
+# Cursor
+.cusor/plans/*

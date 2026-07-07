@@ -1,0 +1,34 @@
+env HOME=$WORK
+env KNOT_KB=$WORK/kb
+
+exec knot init $WORK/kb
+
+exec knot capture 'hello durable note'
+stdout 'inbox/'
+
+exec knot grep 'hello durable note'
+stdout 'hello durable note'
+exec knot grep '^captured:' inbox/
+stdout 'captured:'
+
+exec knot capture --page Deploys --source https://example.com/pr/1 --source https://example.com/ticket/2 'decision text'
+
+exec knot grep 'page: Deploys' inbox/
+exec knot grep 'https://example.com/pr/1' inbox/
+exec knot grep 'https://example.com/ticket/2' inbox/
+exec knot grep 'decision text' inbox/
+
+# stdin
+stdin piped.txt
+exec knot capture
+exec knot grep 'piped capture body' inbox/
+stdout 'piped capture body'
+
+# collision: same slug gets random suffix on second file
+exec knot capture --page same 'same slug text'
+exec knot capture --page same 'same slug text'
+exec knot glob 'inbox/*same*'
+stdout same
+
+-- piped.txt --
+piped capture body

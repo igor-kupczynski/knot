@@ -1,0 +1,21 @@
+env HOME=$WORK
+
+# missing config and env -> exit 2
+env KNOT_KB=
+! exec knot read anything
+stderr 'no knowledge base configured'
+
+exec knot init $WORK/kb
+
+# config file works
+exec knot read index.md
+stdout '# Index'
+
+# KNOT_KB wins over config file
+cp wrong-config $WORK/.config/knot/config
+env KNOT_KB=$WORK/kb
+exec knot read index.md
+stdout '# Index'
+
+-- wrong-config --
+/wrong/path

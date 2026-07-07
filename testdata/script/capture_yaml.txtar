@@ -1,0 +1,17 @@
+env HOME=$WORK
+env KNOT_KB=$WORK/kb
+
+exec knot init $WORK/kb
+
+exec knot capture --page 'a: b' --source '- https://example.com?q="x"' 'yaml escape body'
+stdout inbox/
+
+exec knot grep 'yaml escape body' inbox/
+stdout 'yaml escape body'
+
+# properly YAML-quoted scalars survive in frontmatter
+exec knot grep 'page:' inbox/
+stdout 'a: b'
+
+exec knot grep 'example.com' inbox/
+stdout 'example.com'

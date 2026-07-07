@@ -1,0 +1,27 @@
+[!exec:rg] skip 'rg not installed'
+
+env HOME=$WORK
+env KNOT_KB=$WORK/kb
+
+exec knot init $WORK/kb
+exec knot capture 'searchable postgres connection pool note'
+exec knot capture 'note about -flag style patterns'
+
+exec knot grep postgres
+stdout postgres
+
+! exec knot grep 'zzz-no-match-xyz-abc'
+! stdout .
+
+exec knot grep -l postgres
+stdout inbox/
+
+exec knot grep postgres -l
+stdout inbox/
+
+exec knot grep -- -flag
+stdout -flag
+
+! exec knot grep --pre /bin/echo needle
+stderr 'rejected ripgrep flag'
+stderr '--pre'

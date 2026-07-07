@@ -1,0 +1,31 @@
+env HOME=$WORK
+env KNOT_KB=$WORK/kb
+
+exec knot init $WORK/kb
+
+mkdir $WORK/kb/pages
+cp pages/mixedCase.md $WORK/kb/pages/mixedCase.md
+cp pages/Deploy-Pipeline.md $WORK/kb/pages/Deploy-Pipeline.md
+
+exec knot read mixedcase
+stdout 'Mixed Case Page'
+
+! exec knot read ../../etc/hosts
+stderr 'page not found'
+
+! exec knot read /etc/hosts
+stderr 'page not found'
+
+! exec knot read ploy
+stderr 'page not found'
+stderr 'Deploy-Pipeline'
+
+-- pages/mixedCase.md --
+# Mixed Case Page
+
+Case-insensitive page resolution.
+
+-- pages/Deploy-Pipeline.md --
+# Deploy Pipeline
+
+CI-only deploys from main branch.
