@@ -3,8 +3,10 @@ package cmd
 import (
 	_ "embed"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/igor-kupczynski/knot/internal/config"
 	"github.com/spf13/cobra"
@@ -60,8 +62,40 @@ func init() {
 	initCmd.Flags().StringVar(&initFrom, "from", "", "git URL of an existing KB to clone instead of scaffolding")
 }
 
-func cloneKB(kbPath, url string) error {
+// validateCloneURL allows https/http, ssh forms, file://, and local paths.
+// Rejects dash-prefixed values and exotic schemes (ext::, etc.).
+func validateCloneURL(raw string) error {
+	if err := safeGitArg("clone URL", raw); err != nil {
+		return err
+	}
+
+	// SCP-like SSH: git@host:path (no scheme)
+	if strings.Contains(raw, "@") && strings.Contains(raw, ":") && !strings.Contains(raw, "://") {
+		return nil
+	}
+
+	if u, err := url.Parse(raw); err == nil && u.Scheme != "" {
+		switch strings.ToLower(u.Scheme) {
+		case "https", "http", "ssh", "file", "git":
+			return nil
+		default:
+			return fmt.Errorf("knot: unsupported clone URL scheme %q", u.Scheme)
+		}
+	}
+
+	// Local path (absolute or relative); reject scheme-like prefixes with ::
+	if strings.Contains(raw, "::") {
+		return fmt.Errorf("knot: unsupported clone URL %q", raw)
+	}
+	return nil
+}
+
+func cloneKB(kbPath, cloneURL string) error {
 	if _, err := lookPathGit(); err != nil {
+		return err
+	}
+
+	if err := validateCloneURL(cloneURL); err != nil {
 		return err
 	}
 
@@ -85,7 +119,7 @@ func cloneKB(kbPath, url string) error {
 		return fmt.Errorf("knot: create parent dir %s: %w", parent, err)
 	}
 
-	if err := runGit(parent, "clone", url, kbPath); err != nil {
+	if err := runGit(parent, "clone", "--", cloneURL, kbPath); err != nil {
 		return fmt.Errorf("knot: git clone: %w", err)
 	}
 

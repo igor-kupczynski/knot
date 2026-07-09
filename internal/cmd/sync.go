@@ -89,7 +89,13 @@ Then resolve any conflicts with /git-conflict-resolve in a resident agent sessio
 		if err != nil {
 			return err
 		}
-		if err := runGit(kbRoot, "push", "-u", remote, branch); err != nil {
+		if err := safeGitArg("remote", remote); err != nil {
+			return err
+		}
+		if err := safeGitArg("branch", branch); err != nil {
+			return err
+		}
+		if err := runGit(kbRoot, "push", "-u", "--", remote, branch); err != nil {
 			return fmt.Errorf("knot: git push -u %s %s: %w", remote, branch, err)
 		}
 		fmt.Fprintln(os.Stdout, "Synced with remote (first push; upstream set).")

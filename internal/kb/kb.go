@@ -33,7 +33,26 @@ func isPathEscape(clean string) bool {
 	return strings.HasPrefix(clean, ".."+sep)
 }
 
+// underRoot reports whether abs is inside kbRoot after symlink resolution.
+func underRoot(kbRoot, abs string) bool {
+	root, err := filepath.EvalSymlinks(kbRoot)
+	if err != nil {
+		root = filepath.Clean(kbRoot)
+	}
+	resolved, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		// Broken symlink or missing intermediate: fall back to cleaned abs.
+		resolved = filepath.Clean(abs)
+	}
+	rel, err := filepath.Rel(root, resolved)
+	if err != nil {
+		return false
+	}
+	return !isPathEscape(rel) && rel != ".."
+}
+
 // ResolvePath returns the absolute path for a KB-relative regular file if it exists.
+// Symlinks are followed only when the final target stays under kbRoot.
 func ResolvePath(kbRoot, relPath string) (string, bool) {
 	if filepath.IsAbs(relPath) {
 		return "", false
@@ -45,6 +64,9 @@ func ResolvePath(kbRoot, relPath string) (string, bool) {
 	abs := filepath.Join(kbRoot, clean)
 	info, err := os.Stat(abs)
 	if err != nil || !info.Mode().IsRegular() {
+		return "", false
+	}
+	if !underRoot(kbRoot, abs) {
 		return "", false
 	}
 	return abs, true
@@ -85,7 +107,11 @@ func ResolvePage(kbRoot, name string) (string, bool, error) {
 			continue
 		}
 		if pageNamesMatch(stem, name) {
-			return filepath.Join(pagesDir, entry.Name()), true, nil
+			abs := filepath.Join(pagesDir, entry.Name())
+			if !underRoot(kbRoot, abs) {
+				continue
+			}
+			return abs, true, nil
 		}
 	}
 	return "", false, nil

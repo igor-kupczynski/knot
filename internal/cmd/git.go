@@ -23,6 +23,73 @@ func lookPathGit() (string, error) {
 	return path, nil
 }
 
+// safeGitArg rejects empty values and values that look like git options.
+func safeGitArg(name, v string) error {
+	if v == "" || strings.HasPrefix(v, "-") {
+		return fmt.Errorf("knot: invalid %s %q", name, v)
+	}
+	return nil
+}
+
+// gitSafetyArgs are prepended to every git invocation to neutralize
+// untrusted repo config and exotic protocols.
+var gitSafetyArgs = []string{
+	"-c", "core.fsmonitor=",
+	"-c", "core.hooksPath=/dev/null",
+	"-c", "protocol.ext.allow=never",
+}
+
+// gitDangerousEnv prefixes stripped from the child environment so a
+// hostile ambient env cannot redirect git state or run helpers.
+var gitDangerousEnv = []string{
+	"GIT_DIR=",
+	"GIT_WORK_TREE=",
+	"GIT_OBJECT_DIRECTORY=",
+	"GIT_INDEX_FILE=",
+	"GIT_CONFIG=",
+	"GIT_CONFIG_GLOBAL=",
+	"GIT_CONFIG_SYSTEM=",
+	"GIT_CONFIG_NOSYSTEM=",
+	"GIT_CONFIG_COUNT=",
+	"GIT_SSH_COMMAND=",
+	"GIT_SSH=",
+	"GIT_EXTERNAL_DIFF=",
+	"GIT_DIFF_OPTS=",
+	"GIT_SEQUENCE_EDITOR=",
+	"GIT_EDITOR=",
+	"GIT_PAGER=",
+	"GIT_TRACE=",
+	"GIT_TRACE2=",
+	"GIT_EXEC_PATH=",
+	"GIT_ALTERNATE_OBJECT_DIRECTORIES=",
+	"GIT_TEMPLATE_DIR=",
+	"EDITOR=",
+	"VISUAL=",
+	"PAGER=",
+}
+
+func scrubGitEnv() []string {
+	env := os.Environ()
+	out := make([]string, 0, len(env))
+	for _, e := range env {
+		drop := false
+		for _, p := range gitDangerousEnv {
+			if strings.HasPrefix(e, p) {
+				drop = true
+				break
+			}
+		}
+		// Also drop GIT_CONFIG_KEY_* / GIT_CONFIG_VALUE_* pair vars.
+		if strings.HasPrefix(e, "GIT_CONFIG_KEY_") || strings.HasPrefix(e, "GIT_CONFIG_VALUE_") {
+			drop = true
+		}
+		if !drop {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
 func runGit(kbRoot string, args ...string) error {
 	_, _, err := runGitCapture(kbRoot, args...)
 	return err
@@ -34,8 +101,13 @@ func runGitCapture(kbRoot string, args ...string) (stdout, stderr string, err er
 		return "", "", err
 	}
 
-	cmd := exec.Command(git, args...)
+	full := make([]string, 0, len(gitSafetyArgs)+len(args))
+	full = append(full, gitSafetyArgs...)
+	full = append(full, args...)
+
+	cmd := exec.Command(git, full...)
 	cmd.Dir = kbRoot
+	cmd.Env = scrubGitEnv()
 	var outBuf, errBuf bytes.Buffer
 	cmd.Stdout = &outBuf
 	cmd.Stderr = &errBuf
