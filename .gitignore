@@ -7,3 +7,10 @@ coverage.html
 
 # Cursor
 .cursor/plans/*
+
+# wolfpack scanner (local tooling — scaffolded by `wolfpack init`)
+.wolfpack/
+wolfpack.toml
+
+# local temp .md files
+*.local.md
