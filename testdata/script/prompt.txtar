@@ -8,7 +8,7 @@ cmp stdout prompt-snippet.txt
 # knot — personal knowledge base access
 
 knot connects you to a personal markdown knowledge base (KB) maintained by its
-own resident agent. Use it to (1) pull the context behind past decisions and
+own resident agent. Use it to (1) pull context when the user asks for it and
 (2) push new knowledge back as you work. You cannot edit KB pages — you capture
 raw notes; the resident agent files them.
 
@@ -22,8 +22,8 @@ raw notes; the resident agent files them.
     knot glob <pattern>        List KB files matching a pattern
                                (knot glob postgres, knot glob 'pages/*.md').
 
-Search before assuming: if a project, system, or decision might have history
-here, `knot grep` it first.
+Only read the KB when the user explicitly asks you to (e.g. "check knot",
+"what does the KB say about X"). Do not consult it proactively.
 
 ## Capturing
 
@@ -38,11 +38,9 @@ your session context.
 - --source repeats: link the PR, the ticket, the thread
 - Captures are instant and append-only; they never touch pages.
 
-When in doubt, capture — filing quality is the resident agent's problem, not yours.
-
 -- prompt-snippet.txt --
 You have access to `knot`, a CLI for a personal markdown knowledge base holding
-context on past decisions, systems, and projects. Search it before assuming:
-`knot grep <pattern>`. Capture durable learnings back as you work:
+context on past decisions, systems, and projects. Search it only when the user
+asks: `knot grep <pattern>`. Capture durable learnings back as you work:
 `knot capture --source <url> "self-contained summary"`. Run `knot prompt` for
 full usage.
